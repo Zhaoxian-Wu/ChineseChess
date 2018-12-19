@@ -233,7 +233,9 @@ play.AIPlay = function (){
 	axios
 		.post('/pace', { 
 			'data': {
-				'checkerboard': play.map
+				'checkerboard': play.map,
+				'depth': play.depth,
+				'paces': play.pace.join(""),
 			},
 			'headers': {
 				'Content': 'application/json'

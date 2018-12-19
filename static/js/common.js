@@ -81,7 +81,17 @@ window.onload = function(){
 		}
 	})
 	com.get("superPlay").addEventListener("click", function(e) {
-		if (confirm("确认开始大师级对弈？")){
+		if (confirm("确认开始高级对弈？")){
+			play.isPlay=true ;	
+			com.get("chessRight").style.display = "none";
+			com.get("moveInfo").style.display = "block";
+			com.get("moveInfo").innerHTML="";
+			play.depth = 6;
+			play.init();
+		}
+	})
+	com.get("midPlay").addEventListener("click", function(e) {
+		if (confirm("确认开始中级对弈？")){
 			play.isPlay=true ;	
 			com.get("chessRight").style.display = "none";
 			com.get("moveInfo").style.display = "block";
@@ -96,7 +106,7 @@ window.onload = function(){
 			com.get("chessRight").style.display = "none";
 			com.get("moveInfo").style.display = "block";
 			com.get("moveInfo").innerHTML="";
-			play.depth = 3;
+			play.depth = 2;
 			play.init();
 		}
 	})
