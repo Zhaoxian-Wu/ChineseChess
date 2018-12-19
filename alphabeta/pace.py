@@ -1,4 +1,6 @@
 import time
+import random
+import os
 
 import sys
 sys.path.append('./alphabeta')
@@ -7,36 +9,60 @@ from evaluate import checkerValue
 
 MIN = -10000
 
-def getPace(checkerboard, maxDepth):
-  beg = time.time()
+def matchChessScore_():
+  __dir__ = os.path.dirname(os.path.abspath(__file__))
+  dataFile = __dir__ + '/chessScore'
   
-  if maxDepth % 2 != 0:
-    maxDepth += 1
+  chessScore = []
+  with open(dataFile, 'r') as f:
+    for line in f:
+      chessScore.append(line)
+  maybe = chessScore
+  lastHistory = 0
+  def match(history):
+    l = len(history)
+    nonlocal maybe, lastHistory
+    if l >= 80:
+      return ''
+    if l <= lastHistory:
+      maybe = chessScore
+    lastHistory = l
+    maybe_ = []
+    for line in maybe:
+      if line[0:len(history)] == history:
+        maybe_.append(line.strip())
+    maybe = maybe_
+    if len(maybe) != 0:
+      path = random.choice(maybe)
+    else:
+      path = ''
+    print('[棋谱] {}'.format(path[len(history):]))
+    print('（匹配棋谱数: {}）'.format(len(maybe)))
+    return path[l:l+4]
+  return match
+matchChessScore = matchChessScore_()
 
-  initCheckerBoard(checkerboard)
+def getPace(checkerboard, maxDepth, history):
+  path = matchChessScore(history)
+  if path != '':
+    # 匹配棋谱
+    nextPace = path
+  else:
+    # alpha-beta剪枝
+    beg = time.time()
+    
+    if maxDepth % 2 != 0:
+      maxDepth += 1
 
-  # ! DEBUG
-  # paces = []
-  # for y in range(0, 10):
-  #   for x in range(0, 9):
-  #     if cb[y][x]:
-  #       c = cb[y][x]
-  #       if c.isupper() == True:
-  #         t = paceGetter[c](x, y)
-  #         paces += t
-  #         print((x, y), c, t)
-  # ! ======================
+    initCheckerBoard(checkerboard)
 
-  # 读取历史记录
-  # nextPace = getFromHistory()
-  # if nextPace == None:
-  _, nextPace = _alphabeta(-MIN, maxDepth)
+    _, nextPace = _alphabeta(-MIN, maxDepth)
 
-  if cb[nextPace[3]][nextPace[2]] \
-    and cb[nextPace[3]][nextPace[2]].lower() == 'j':
-      nextPace = None
+    if cb[nextPace[3]][nextPace[2]] \
+      and cb[nextPace[3]][nextPace[2]].lower() == 'j':
+        nextPace = None
 
-  print('计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, maxDepth))
+    print('计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, maxDepth))
 
   return nextPace
 
@@ -67,10 +93,6 @@ def _alphabeta(alpha, maxDepth):
       if value >= alpha:
         break
 
-  # ! DEBUG
-  # print('value:', value, 'depth:', maxDepth)
-  # logCheckerBoard()
-  # ! ====================
   return value, nextPace
 
 # CheckerBoard

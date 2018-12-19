@@ -235,7 +235,7 @@ play.AIPlay = function (){
 			'data': {
 				'checkerboard': play.map,
 				'depth': play.depth,
-				'paces': play.pace.join(""),
+				'history': play.pace.join(""),
 			},
 			'headers': {
 				'Content': 'application/json'
