@@ -19,6 +19,13 @@ $ python server.py
 ```
 在浏览器访问地址：localhost:8080
 
+# 测试文件
+测试文件在`alphabeta`文件夹下,测试命令为:
+```bash
+python test_alphabeta.py
+```
+测试内容见文件
+
 # 代码引用
 [itlwei/chess](https://github.com/itlwei/chess)：移植了UI界面，移除了AI功能  
 [axios/axios](https://github.com/axios/axios)：异步请求组件
