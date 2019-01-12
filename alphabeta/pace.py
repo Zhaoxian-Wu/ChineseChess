@@ -34,10 +34,10 @@ def matchChessScore_():
     maybe = maybe_
     if len(maybe) != 0:
       path = random.choice(maybe)
+      print('[棋谱] {}'.format(path[len(history):]))
+      print('（匹配棋谱数: {}）'.format(len(maybe)))
     else:
       path = ''
-    print('[棋谱] {}'.format(path[len(history):]))
-    print('（匹配棋谱数: {}）'.format(len(maybe)))
     return path[l:l+4]
   return match
 matchChessScore = matchChessScore_()
@@ -50,27 +50,23 @@ def getPace(checkerboard, maxDepth, history):
   else:
     # alpha-beta剪枝
     beg = time.time()
-    
-    if maxDepth % 2 != 0:
-      maxDepth += 1
 
     initCheckerBoard(checkerboard)
 
-    _, nextPace = _alphabeta(-MIN, maxDepth)
+    _, nextPace = _alphabeta(-MIN, maxDepth, turnToAI=True)
 
-    if cb[nextPace[3]][nextPace[2]] \
-      and cb[nextPace[3]][nextPace[2]].lower() == 'j':
-        nextPace = None
+    # if cb[nextPace[3]][nextPace[2]] \
+    #   and cb[nextPace[3]][nextPace[2]].lower() == 'j':
+    #     nextPace = None
 
-    print('计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, maxDepth))
+    print('[alpha-beta剪枝] 计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, maxDepth))
 
   return nextPace
 
-def _alphabeta(alpha, maxDepth):
+def _alphabeta(alpha, maxDepth, turnToAI):
   value, nextPace = MIN, None
-  turnToAI = maxDepth % 2 == 0
   paces = getAllPace(turnToAI)
-  
+
   for pace in paces:
     # 是否吃将
     clear = cb[pace[3]][pace[2]]
@@ -81,9 +77,9 @@ def _alphabeta(alpha, maxDepth):
     # 移动
     move(pace)
     if maxDepth == 1:
-      newValue = evaluateBoard()
+      newValue = evaluateBoard(not turnToAI)
     else:
-      newValue, _ = _alphabeta(-value, maxDepth-1)
+      newValue, _ = _alphabeta(-value, maxDepth-1, turnToAI=not turnToAI)
     newValue = -newValue
     unmove(pace)
 
@@ -112,18 +108,7 @@ cb = [
 # 大写是AI，小写是玩家
 # 黑色是AI，红色是玩家
 # 因此所有大写字母的companion都是True，表示为电脑一方
-companion = [
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9, 
-  [True] * 9
-]
+companion = [[True] * 9 for _ in range(10)]
 
 def initCheckerBoard(checkerboard):
   for y, line in enumerate(checkerboard):
@@ -466,10 +451,10 @@ paceGetter = {
 
 # =============================
 # 棋局评估
-def evaluateBoard():
+def evaluateBoard(turnToAI):
   value = 0
-  for y in range(0, 10):
-    for x in range(0, 9):
+  for y in range(10):
+    for x in range(9):
       if cb[y][x]:
         c = cb[y][x]
         if c.islower():
@@ -479,18 +464,18 @@ def evaluateBoard():
           # 黑方棋子
           c = c.lower()
           value += checkerValue[c][9-y][8-x]
-  return value
+  return value if turnToAI else -value
 
 def logCheckerBoard():
-  print('================================')
-  for y in range(0, 10):
-    for x in range(0, 9):
+  print('==========================================')
+  for y in range(10):
+    for x in range(9):
       if cb[y][x]:
         print(cb[y][x], end=' ')
       else:
         print('-', end=' ')
-    print('          ', end='')
-    for x in range(0, 9):
+    print('       ', end='')
+    for x in range(9):
       if cb[y][x]:
         if companion[y][x]:
           print(1, end=' ')
@@ -499,4 +484,4 @@ def logCheckerBoard():
       else:
         print('-', end=' ')
     print('')
-  print('================================\n')
+  print('==========================================\n')
