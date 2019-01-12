@@ -7,6 +7,43 @@ sys.path.append('./alphabeta')
 sys.path.append('./')
 from evaluate import checkerValue
 
+# 棋盘: CheckerBoard
+cb = [
+  ['C0','M0','X0','S0','J0','S1','X1','M1','C1'],
+  [None,None,None,None,None,None,None,None,None],
+  [None,'P0',None,None,None,None,None,'P1',None],
+  ['Z0',None,'Z1',None,'Z2',None,'Z3',None,'Z4'],
+  [None,None,None,None,None,None,None,None,None],
+  [None,None,None,None,None,None,None,None,None],
+  ['z0',None,'z1',None,'z2',None,'z3',None,'z4'],
+  [None,'p0',None,None,None,None,None,'p1',None],
+  [None,None,None,None,None,None,None,None,None],
+  ['c0','m0','x0','s0','j0','s1','x1','m1','c1']
+]
+
+# 大写是AI，小写是玩家
+# 黑色是AI，红色是玩家
+# 因此所有大写字母的companion都是True，表示为电脑一方
+companion = [[True] * 9 for _ in range(10)]
+
+# Zonbrist键值
+# Zonbrist[棋子][y][x]
+Zonbrist = {
+  chess: [
+      [random.randint(0, 2<<63) for _ in range(9)] for _ in range(10)
+    ] 
+    for chess in ['C','M','X','S','J','P','Z','c','m','x','s','j','p','z']
+}
+# 置换表: Translation Table
+TT_SIZE_LENGTH = 10 # 2**(TT_SIZE_LENGTH-1)长的置换表
+TT = [0] * (2 << TT_SIZE_LENGTH)
+Z_value = 0
+
+# n % TT_SIZE == n & MASK_TT : 取置换表长度的模
+MASK_TT = (2 << TT_SIZE_LENGTH) - 1
+# ~n == n ^ MASK_64 : 64位按位非
+MASK_64 = (2 << 64) - 1
+
 MIN = -10000
 
 def matchChessScore_():
@@ -42,7 +79,7 @@ def matchChessScore_():
   return match
 matchChessScore = matchChessScore_()
 
-def getPace(checkerboard, maxDepth, history):
+def getPace(checkerboard, maxTime, history):
   path = matchChessScore(history)
   if path != '':
     # 匹配棋谱
@@ -53,13 +90,12 @@ def getPace(checkerboard, maxDepth, history):
 
     initCheckerBoard(checkerboard)
 
-    _, nextPace = _alphabeta(-MIN, maxDepth, turnToAI=True)
+    depth = 1
+    while(time.time()-beg < maxTime):
+      _, nextPace = _alphabeta(-MIN, depth, turnToAI=True)
+      depth += 1
 
-    # if cb[nextPace[3]][nextPace[2]] \
-    #   and cb[nextPace[3]][nextPace[2]].lower() == 'j':
-    #     nextPace = None
-
-    print('[alpha-beta剪枝] 计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, maxDepth))
+    print('[alpha-beta剪枝] 计算时间：{:.2f}s，计算深度：{}'.format(time.time()-beg, depth))
 
   return nextPace
 
@@ -81,6 +117,10 @@ def _alphabeta(alpha, maxDepth, turnToAI):
     else:
       newValue, _ = _alphabeta(-value, maxDepth-1, turnToAI=not turnToAI)
     newValue = -newValue
+    # 记录进置换表
+    # 当下一步轮到对方走时,Zonbrist键值去反,以示区分
+    pos = Z_value if turnToAI else Z_value ^ MASK_64
+    TT[pos & MASK_TT] = newValue
     unmove(pace)
 
     # 更新值，剪枝
@@ -91,31 +131,14 @@ def _alphabeta(alpha, maxDepth, turnToAI):
 
   return value, nextPace
 
-# CheckerBoard
-cb = [
-  ['C0','M0','X0','S0','J0','S1','X1','M1','C1'],
-  [None,None,None,None,None,None,None,None,None],
-  [None,'P0',None,None,None,None,None,'P1',None],
-  ['Z0',None,'Z1',None,'Z2',None,'Z3',None,'Z4'],
-  [None,None,None,None,None,None,None,None,None],
-  [None,None,None,None,None,None,None,None,None],
-  ['z0',None,'z1',None,'z2',None,'z3',None,'z4'],
-  [None,'p0',None,None,None,None,None,'p1',None],
-  [None,None,None,None,None,None,None,None,None],
-  ['c0','m0','x0','s0','j0','s1','x1','m1','c1']
-]
-
-# 大写是AI，小写是玩家
-# 黑色是AI，红色是玩家
-# 因此所有大写字母的companion都是True，表示为电脑一方
-companion = [[True] * 9 for _ in range(10)]
-
 def initCheckerBoard(checkerboard):
+  global Z_value
   for y, line in enumerate(checkerboard):
     for x, c in enumerate(line):
       if c:
         c = c[0:1]
         companion[y][x] = c.isupper()
+        Z_value += Zonbrist[c][y][x]
       cb[y][x] = c
   
 def getAllPace(turnToAI:bool):
@@ -127,7 +150,8 @@ def getAllPace(turnToAI:bool):
         if c.isupper() == turnToAI:
           paces += paceGetter[c](x, y)
   
-  paces.sort(key=paceKey, reverse=True)
+  # paces.sort(key=paceKey, reverse=True)
+  paces.sort(key=lambda pace: TT[newZonbrist(pace) & MASK_TT])
 
   return paces
 
@@ -160,30 +184,42 @@ def paceKey(pace):
 # 被吃掉的棋子的栈
 clearStack = []
 
+def newZonbrist(pace):
+  moveChecker = cb[pace[1]][pace[0]]
+  new_Z = Z_value 
+  new_Z ^= Zonbrist[moveChecker][pace[3]][pace[2]]
+  new_Z ^= Zonbrist[moveChecker][pace[1]][pace[0]]
+  clearChecker = cb[pace[3]][pace[2]]
+  if clearChecker:
+    new_Z ^= Zonbrist[clearChecker][pace[3]][pace[2]]
+  return new_Z
+
 def move(pace):
+  global Z_value
+  Z_value = newZonbrist(pace)
   clearChecker = cb[pace[3]][pace[2]]
   clearStack.append(clearChecker)
   cb[pace[3]][pace[2]] = cb[pace[1]][pace[0]]
   cb[pace[1]][pace[0]] = None
 
   companion[pace[3]][pace[2]] = cb[pace[3]][pace[2]].isupper()
-  
+
 def unmove(pace):
+  global Z_value
+  moveChecker = cb[pace[3]][pace[2]]
+  Z_value ^= Zonbrist[moveChecker][pace[3]][pace[2]]
+  Z_value ^= Zonbrist[moveChecker][pace[1]][pace[0]]
+
   clearChecker = clearStack.pop(-1)
   cb[pace[1]][pace[0]] = cb[pace[3]][pace[2]]
   if clearChecker:
     cb[pace[3]][pace[2]] = clearChecker
     companion[pace[3]][pace[2]] = cb[pace[3]][pace[2]].isupper()
+    Z_value ^= Zonbrist[clearChecker][pace[3]][pace[2]]
   else:
     cb[pace[3]][pace[2]] = None
 
   companion[pace[1]][pace[0]] = cb[pace[1]][pace[0]].isupper()
-
-# def getFromHistory():
-#   if True:
-#     return None
-#   else:
-#     return 1
 
 # 车
 def getPace_C(x, y):

@@ -20,7 +20,6 @@ play.init = function (){
 	play.show 			= 	com.show;
 	play.showPane 		= 	com.showPane;
 	play.isOffensive	=	true;			//是否先手
-	play.depth			=	play.depth || 3;				//搜索深度
 	
 	play.isFoul			=	false;	//是否犯规长将
 	
@@ -234,7 +233,7 @@ play.AIPlay = function (){
 		.post('/pace', { 
 			'data': {
 				'checkerboard': play.map,
-				'depth': play.depth,
+				'maxTime': play.maxTime,
 				'history': play.pace.join(""),
 			},
 			'headers': {

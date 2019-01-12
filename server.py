@@ -15,9 +15,9 @@ def hello_world():
 def route_pace():
   req_json = flask.request.get_json()
   checkerboard = req_json['data']['checkerboard']
-  maxDepth = req_json['data']['depth']
+  maxTime = req_json['data']['maxTime']
   history = req_json['data']['history']
-  pace = alphabeta.pace.getPace(checkerboard, maxDepth, history)
+  pace = alphabeta.pace.getPace(checkerboard, maxTime, history)
   if pace:
     return ''.join([str(i) for i in pace])
   else:

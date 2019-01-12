@@ -86,7 +86,7 @@ window.onload = function(){
 			com.get("chessRight").style.display = "none";
 			com.get("moveInfo").style.display = "block";
 			com.get("moveInfo").innerHTML="";
-			play.depth = 6;
+			play.maxTime = 1;
 			play.init();
 		}
 	})
@@ -96,7 +96,7 @@ window.onload = function(){
 			com.get("chessRight").style.display = "none";
 			com.get("moveInfo").style.display = "block";
 			com.get("moveInfo").innerHTML="";
-			play.depth = 4;
+			play.maxTime = 0.5;
 			play.init();
 		}
 	})
@@ -106,7 +106,7 @@ window.onload = function(){
 			com.get("chessRight").style.display = "none";
 			com.get("moveInfo").style.display = "block";
 			com.get("moveInfo").innerHTML="";
-			play.depth = 2;
+			play.maxTime = 0.3;
 			play.init();
 		}
 	})
@@ -117,7 +117,6 @@ window.onload = function(){
 		else if (stype=="stype2") stype="stype1";
 		com.init(stype);
 		com.show();
-		play.depth = 4;
 		play.init();
 		document.cookie="stype=" +stype;
 		clearInterval(timer);
